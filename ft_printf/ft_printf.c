@@ -1,36 +1,53 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_printf.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: wiozsert <wiozsert@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/03/15 16:28:57 by wiozsert          #+#    #+#             */
+/*   Updated: 2021/03/15 17:21:50 by wiozsert         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
 
-typedef struct	s_data
+#include <stdio.h>
+#define PRINTD(x) printf("%d\n", x);
+#define PRINTS(x) printf("%s\n", x);
+#define PRINTX(x) printf("%x\n", x);
+#define DEBUG printf("DEBUG\n");
+
+typedef struct		s_data
 {
+	int		width;
+	int		precision;
 	long	l_arg;
 	char	conv;
-	int	width;
-	int	precision;
 	char	*c_str;
-}		t_data;
-
-int	ft_strlen(char *str)
-{
-	int	i;
-
-	i = 0;
-	while (str[i] != '\0')
-		i++;
-	return (i);
-}
+}					t_data;
 
 static void	ft_putchar(char c)
 {
 	write(1, &c, 1);
 }
 
-static int	ft_atoi(const char *src)
+static int	ft_strlen(const char *src)
 {
-	int	i;
-	int	res;
+	int		i;
+
+	i = 0;
+	while (src[i] != '\0')
+		i++;
+	return (i);
+}
+
+static int		ft_atoi(const char *src)
+{
+	int		i;
+	long	res;
 	
 	i = 0;
 	res = 0;
@@ -42,189 +59,191 @@ static int	ft_atoi(const char *src)
 	return (res);
 }
 
-static char	*ft_itoa_base(long nbr, char *base, t_data data)
+static t_data	get_width(const char *src, t_data data)
 {
-	char	*str;
-	long	nb;
-	int	len;
-	int	sign;
-
-	len = 0;
-	if (nbr == 0 && data.precision == 0)
-	{
-		if (!(str= (char*)malloc(sizeof(char))))
-			return (0);
-		str[0] = '\0';
-		return (str);
-	}
-	else if (nbr == 0)
-	{
-		if (!(str = (char*)malloc(sizeof(char) * 2)))
-			return (NULL);
-		str[0] = '0';
-		str[1] = '\0';
-		return (str);
-	}
-	sign = 1;
-	if (nbr < 0)
-	{
-		len++;
-		nbr *= -1;
-		sign = -1;
-	}
-	nb = nbr;
-	while (nb > 0)
-	{
-		nb /= ft_strlen(base);
-		len++;
-	}
-	if (!(str = (char*)malloc(sizeof(char) * (len + 1))))
-		return (NULL);
-	str[len] = '\0';
-	len--;
-	while (nbr > 0)
-	{
-		str[len] = base[nbr % ft_strlen(base)]; 
-		len--;
-		nbr /= ft_strlen(base);
-	}
-	if (sign == -1)
-		str[len] = '-';
-	return (str);
+	data.width = ft_atoi(src);
+	return (data);
 }
 
-static int	get_width(const char *src)
+static t_data	get_precision(const char *src, t_data data)
 {
-	int	i;
-
-	i = 0;
-	if (src[i] == '.' || src[i] == 's' || src[i] == 'd' || src[i] == 'x')
-		return (0);
-	return (ft_atoi(src));
-}
-
-static int	get_precision(const char *src)
-{
-	int	i;
+	int		i;
 
 	i = 0;
 	while (src[i] >= '0' && src[i] <= '9')
 		i++;
-	if (src[i] == '.')
-		return (ft_atoi(src + i + 1));
-	return (-1);
+	if (src[i] != '.')
+	{
+		data.precision = -1;
+		return (data);
+	}
+	while (src[i] == '.')
+		i++;
+	data.precision = ft_atoi(src + i);
+	return (data);
 }
 
-static int	get_conv(const char *src)
+static t_data	get_conv(const char *src, t_data data)
 {
-	int	i;
+	int		i;
 
 	i = 0;
 	while (src[i] != 's' && src[i] != 'd' && src[i] != 'x')
 		i++;
-	return (src[i]);
+	data.conv = src[i];
+	return (data);
 }
 
-static int	treat_s(t_data data, int len, int len_content)
+static char		*ft_itoa_base(long nbr, char *base)
 {
-	int	i;
+	char	*dest;
+	long	temp;
+	int		i;
+	int		sign;
 
 	i = 0;
-	if (data.precision == 0)
-		len_content = 0;
-	if (data.precision > len_content)
-		data.precision = len_content;
-	else if (data.precision > 0 && data.precision < len_content)
-		len_content = data.precision;
-	while (data.width > len_content && data.width > data.precision)
+	sign = 1;
+	if (nbr == 0)
 	{
+		if (!(dest = (char*)malloc(sizeof(char) * 2)))
+			return (NULL);
+		dest[0] = '0';
+		dest[1] = '\0';
+		return (dest);
+	}
+	if (nbr < 0)
+	{
+		sign = -1;
+		nbr *= -1;
+		i++;
+	}
+	temp = nbr;
+	while (temp > 0)
+	{
+		temp /= ft_strlen(base);
+		i++;
+	}
+	if (!(dest = (char*)malloc(sizeof(char) * (i + 1))))
+		return (NULL);
+	dest[i] = '\0';
+	i--;
+	while (nbr > 0)
+	{
+		dest[i] = base[nbr % ft_strlen(base)];
+		nbr /= ft_strlen(base);
+		i--;
+	}
+	if (sign == -1)
+		dest[i] = '-';
+	return (dest);
+}
+
+static int	treat_dx(t_data data, int len)
+{
+	int		i;
+	int		arg_len;
+
+	arg_len = ft_strlen(data.c_str);
+	i = 0;
+	if (data.precision < arg_len && data.l_arg < 0)
+		data.precision = arg_len;
+	if (data.precision == 0 && data.l_arg == 0)
+		arg_len = 0;
+	while (data.width > arg_len && data.width > data.precision)
+	{
+		len++;
 		ft_putchar(' ');
 		data.width--;
-		len++;
 	}
-	while(data.precision > 0)
+	if (data.l_arg < 0 && data.precision > arg_len)
+	{
+		i++;
+		len++;
+		ft_putchar('-');
+		arg_len--;
+	}
+	while (data.precision > arg_len)
+	{
+		len++;
+		ft_putchar('0');
+		data.precision--;
+	}
+	while (arg_len > 0)
 	{
 		ft_putchar(data.c_str[i]);
-		data.precision--;
-		len++;
 		i++;
+		arg_len--;
+		len++;
 	}
 	return (len);
 }
 
-
-static int	treat_d_x(t_data data, int len)
+static int	treat_s(t_data data, int len)
 {
-	int	i;
+	int		i;
+	int		arg_len;
 
+	arg_len = ft_strlen(data.c_str);
 	i = 0;
-	if (data.conv == 'x')
-		data.c_str = ft_itoa_base(data.l_arg, "0123456789abcdef", data);
-	else if (data.conv == 'd')
-		data.c_str = ft_itoa_base(data.l_arg, "0123456789", data);
-	while (data.width > ft_strlen(data.c_str) && data.width > data.precision)
+	if (data.precision < arg_len && data.precision != -1)
+		arg_len = data.precision;
+	while (data.width > arg_len)
 	{
 		ft_putchar(' ');
+		len++;
 		data.width--;
-		len++;
 	}
-	if (data.l_arg < 0 )
-	{
-		len++;
-		ft_putchar('-');
-	}
-	while (data.precision > ft_strlen(data.c_str))
-	{
-		ft_putchar('0');
-		data.precision--;
-		len++;
-	}
-	while (data.c_str[i] != '\0')
+	while (arg_len > 0)
 	{
 		ft_putchar(data.c_str[i]);
 		i++;
+		arg_len--;
 		len++;
 	}
-	free(data.c_str);
 	return (len);
 }
 
 static int	get_content(const char *src, va_list list, int len)
 {
 	t_data	data;
-	int	i;
-	int	len_content;
 
-	i = 0;
-	data.width = get_width(src);
-	data.precision = get_precision(src);
-	data.conv = get_conv(src);
+	data.conv = '\0';
+	data = get_width(src, data);
+	data = get_precision(src, data);
+	data = get_conv(src, data);
+	
 	if (data.conv == 's')
 	{
 		data.c_str = va_arg(list, char*);
-		len_content = ft_strlen(data.c_str);
-		treat_s(data, len, len_content);
+		if (data.c_str == NULL)
+			data.c_str = "(null)";
+		len = treat_s(data, len);
+	}
+	else if (data.conv == 'x')
+	{
+		data.l_arg = (unsigned int)va_arg(list, unsigned int);
+		data.c_str = ft_itoa_base(data.l_arg, "0123456789abcdef");
+		len = treat_dx(data, len);
+		free(data.c_str);
 	}
 	else
 	{
-		if (data.conv == 'd')
-			data.l_arg = va_arg(list, int);
-		else
-			data.l_arg = (unsigned int)va_arg(list, unsigned int);
-		treat_d_x(data, len);
+		data.l_arg = va_arg(list, int);
+		data.c_str = ft_itoa_base(data.l_arg, "0123456789");
+		len = treat_dx(data, len);
+		free(data.c_str);
 	}
 	return (len);
 }
 
-int	ft_printf(const char *src, ...)
+
+int		ft_printf(const char *src, ...)
 {
 	va_list	list;
-	int	i;
-	int	len;
+	int		len;
+	int		i;
 
 	len = 0;
-	if (src[0] == '\0')
-		return (len);
 	i = 0;
 	va_start(list, src);
 	while (src[i] != '\0')
@@ -232,8 +251,8 @@ int	ft_printf(const char *src, ...)
 		if (src[i] != '%')
 		{
 			ft_putchar(src[i]);
-			i++;
 			len++;
+			i++;
 		}
 		else
 		{
@@ -246,4 +265,3 @@ int	ft_printf(const char *src, ...)
 	va_end(list);
 	return (len);
 }
-

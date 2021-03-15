@@ -1,54 +1,57 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   inter.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: wiozsert <wiozsert@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/03/15 16:06:17 by wiozsert          #+#    #+#             */
+/*   Updated: 2021/03/15 16:21:45 by wiozsert         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <unistd.h>
 
-void	ft_putchar(char c)
+static void		ft_putchar(char c)
 {
 	write(1, &c, 1);
 }
 
-int main(int ac, char **av)
+static void		inter(char *s1, char *s2)
 {
-	int tab[127];
-	const char *str1;
-	const char *str2;
-	int i;
-	int temp;
+	int		i;
+	int		tab[127];
+	int		temp;
 
-	if (ac != 3)
-	{
-		ft_putchar('\n');
-		return (0);
-	}
 	i = -1;
 	while (++i < 127)
 		tab[i] = 0;
-	str1 = av[1];
-	str2 = av[2];
 	i = 0;
-	while (str1[i] != '\0')
+	while (s2[i] != '\0')
 	{
-		temp = str1[i];
+		temp = s2[i];
 		tab[temp]++;
 		i++;
 	}
 	i = 0;
-	while (str2[i] != '\0')
+	while (s1[i] != '\0')
 	{
-		temp = str2[i];
-		tab[temp]++;
-		i++;
-	}
-	i = 0;
-	while (str1[i] != '\0')
-	{
-		temp = str1[i];
-		if (tab[temp] >= 2)
+		temp = s1[i];
+		if (tab[temp] > 0)
 		{
-			ft_putchar(str1[i]);
+			ft_putchar(s1[i]);
 			tab[temp] = 0;
 		}
 		i++;
 	}
 	ft_putchar('\n');
-	return (0);
 }
 
+int main(int ac, char **av)
+{
+	if (ac != 3)
+		ft_putchar('\n');
+	else
+		inter(av[1], av[2]);
+	return (0);
+}
