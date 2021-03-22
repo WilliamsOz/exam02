@@ -1,81 +1,75 @@
 #include "./get_next_line.h"
 
-static int	ft_strlen(char *str)
+static int		ft_strlen(char *str)
 {
-	int	i;
+	int		i;
 
 	i = 0;
+	if (str == NULL)
+		return (i);
 	while (str[i] != '\0')
 		i++;
 	return (i);
 }
 
-static char	*ft_strsjoin_buffer_in_line(char *line, char *buffer)
+static char		*ft_strsjoin(char *line, char *buffer)
 {
 	char	*dest;
-	int	i;
+	int		i;
 
-	if (line == NULL)
+	i = ft_strlen(line) + 1;
+	if (!(dest = (char*)malloc(sizeof(char) * (i + 1))))
+		return (NULL);
+	dest[i] = '\0';
+	i = 0;
+	if (line != NULL)
 	{
-		if (!(line = (char*)malloc(sizeof(char) * 2)))
-			return (NULL);
-		line[0] = buffer[0];
-		line[1] = '\0';
-	}
-	else
-	{
-		if (!(dest = (char*)malloc(sizeof(char) * (ft_strlen(line) + 2))))
-			return (NULL);
-		i = 0;
 		while (line[i] != '\0')
 		{
 			dest[i] = line[i];
 			i++;
 		}
-		dest[i] = buffer[0];
-		dest[i + 1] = '\0';
 		free(line);
-		line = dest;
 	}
+	dest[i] = buffer[0];
+	line = dest;
 	return (line);
 }
 
-static char	*get_line(char *line, char *buffer, size_t *ptr_is_eof)
+static char		*get_line(char *line, int *eof)
 {
-	*ptr_is_eof = read(0, buffer, 1);
-	if (line == NULL && (buffer[0] == '\n' || buffer[0] == '\0'))
+	char	buffer[1];
+
+	*eof = read(0, buffer, 1);
+	if (*eof == -1)
+		return (NULL);
+	if (buffer[0] == '\n' && line != NULL)
+		return (line);
+	if (buffer[0] == '\n' || *eof == 0)
 	{
 		if (!(line = (char*)malloc(sizeof(char) * 1)))
 			return (NULL);
 		line[0] = '\0';
 		return (line);
-	} 
-	else if (buffer[0] == '\n')
-		return (line);
+	}
 	else
 	{
-		line = ft_strsjoin_buffer_in_line(line, buffer);
-		buffer[0] = '\0';
-		*ptr_is_eof = read(0, buffer, 1);
-		if (*ptr_is_eof == 0)
-			return (line);
-		else
-			line = ft_strsjoin_buffer_in_line(line, buffer);
-		buffer[0] = '\0';
-		line = get_line(line, buffer, ptr_is_eof);
+		line = ft_strsjoin(line, buffer);
+		if (line == NULL)
+		{
+			*eof = -1;
+			return (NULL);
+		}
+		line = get_line(line, eof);
 	}
 	return (line);
 }
 
-int	get_next_line(char **line)
+int				get_next_line(char **line)
 {
-	char	buffer[1];
-	size_t	is_eof;
-
-	buffer[0] = '\0';
-	if ((*line = get_line(*line, buffer, &is_eof)) == NULL)
-		return (-1);
-	if (is_eof == 1)
-		return (1);
-	return (0);
+	int		eof;
+	
+	*line = get_line(*line, &eof);
+	return (eof);
 }
+
