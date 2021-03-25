@@ -1,6 +1,6 @@
 #include <libc.h>
 
-char  *recursive(int i, int *ret, int fd)
+char  *recursive(int fd, int i, int *ret)
 {
 	char buff[1];
 	int rd;
@@ -25,7 +25,7 @@ char  *recursive(int i, int *ret, int fd)
 	}
 	else
 	{
-		if (!(line = recursive(i + 1, ret, fd)))
+		if (!(line = recursive(fd, i + 1, ret)))
 		{
 			*ret = -1;
 			return (0);
@@ -37,7 +37,7 @@ char  *recursive(int i, int *ret, int fd)
 int         get_next_line(int fd, char **line)
 {
 	int ret;
-	*line = recursive(0, &ret, fd);
+	*line = recursive(fd, 0, &ret);
 	return (ret);
 }
 
@@ -53,8 +53,8 @@ int
 	int		r;
 	char	*line;
 
-	int fd = open("./cc.txt", O_RDONLY);
 	line = NULL;
+	int fd = open("./cccns.txt", O_RDONLY);
 	while ((r = get_next_line(fd, &line)) > 0)
 	{
 		printf("%s\n", line);

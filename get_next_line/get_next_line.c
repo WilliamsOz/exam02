@@ -1,4 +1,5 @@
 #include "./get_next_line.h"
+#include <libc.h>
 
 static int		ft_strlen(char *str)
 {
@@ -36,40 +37,42 @@ static char		*ft_strsjoin(char *line, char *buffer)
 	return (line);
 }
 
-static char		*get_line(char *line, int *eof)
+static char		*get_line(char *line, int *eof, int i)
 {
 	char	buffer[1];
+	int		is_eof;
 
-	*eof = read(0, buffer, 1);
-	if (*eof == -1)
+	is_eof = read(0, buffer, 1);
+	*eof = is_eof;
+	if (is_eof == -1)
 		return (NULL);
-	if (buffer[0] == '\n' && line != NULL)
-		return (line);
-	if (buffer[0] == '\n' || *eof == 0)
+	if (line == NULL && (buffer[0] == '\n' || is_eof == 0))
 	{
 		if (!(line = (char*)malloc(sizeof(char) * 1)))
 			return (NULL);
 		line[0] = '\0';
 		return (line);
 	}
-	else
+	else if (buffer[0] == '\n')
+		return (line);
+	line = ft_strsjoin(line, buffer);
+	if (line == NULL)
 	{
-		line = ft_strsjoin(line, buffer);
-		if (line == NULL)
-		{
-			*eof = -1;
-			return (NULL);
-		}
-		line = get_line(line, eof);
+		*eof = -1;
+		return (NULL);
 	}
+	*eof = is_eof;
+	line = get_line(line, eof, i + 1);
 	return (line);
 }
+
+#include <libc.h>
 
 int				get_next_line(char **line)
 {
 	int		eof;
 	
-	*line = get_line(*line, &eof);
+	*line = get_line(*line, &eof, 0);
 	return (eof);
 }
 
